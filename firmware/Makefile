@@ -1,7 +1,7 @@
 # Name: Makefile
-# Author: <insert your name here>
-# Copyright: <insert your copyright message here>
-# License: <insert your license reference here>
+# Author: Mitchel Humpherys
+# Copyright: 2014
+# License: Creative Commons
 
 # This is a prototype Makefile. Modify it according to your needs.
 # You should at least check the settings for
@@ -18,10 +18,21 @@
 # FUSES ........ Parameters for avrdude to flash the fuses appropriately.
 
 DEVICE     = atmega8
-CLOCK      = 8000000
-PROGRAMMER = #-c stk500v2 -P avrdoper
+# CLOCK      = 8000000
+CLOCK      = 16000000
+# PROGRAMMER = #-c stk500v2 -P avrdoper
+# PROGRAMMER = -c buspirate -P /dev/tty.usbserial-A700e7cb
 OBJECTS    = main.o
 FUSES      = -U hfuse:w:0xd9:m -U lfuse:w:0x24:m
+# original fuse value read from device:
+#   avrdude: Device signature = 0x1e9307
+#   avrdude: safemode: lfuse reads as FF
+#   avrdude: safemode: hfuse reads as C9
+#
+#   avrdude: safemode: lfuse reads as FF
+#   avrdude: safemode: hfuse reads as C9
+#   avrdude: safemode: Fuses OK (H:FF, E:C9, L:FF)
+
 
 # ATMega8 fuse bits used above (fuse bits for other devices are different!):
 # Example for 8 MHz internal oscillator

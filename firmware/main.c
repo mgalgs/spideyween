@@ -5,12 +5,16 @@
  */
 
 #include <avr/io.h>
+#include <util/delay.h>
 
 int main(void)
 {
-    /* insert your hardware initialization here */
+    DDRD = 1 << 4;              /* make PD4 an output */
     for(;;) {
-        /* insert your main loop code here */
+        char i;
+        for (i = 0; i < 10; ++i)
+            _delay_ms(16);
+        PORTD ^= 1 << 4;        /* toggle the LED */
     }
     return 0;   /* never reached */
 }
