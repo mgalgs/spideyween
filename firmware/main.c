@@ -9,14 +9,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/* increase to make the spider slower to start spraying */
+#define LAZY_SPIDER_FACTOR 8
+
 /* https://sites.google.com/site/qeewiki/books/avr-guide/analog-input */
 uint8_t ADCsingleREAD(uint8_t adctouse)
 {
-    int ADCval;
+    uint8_t ADCval;
 
     ADMUX = adctouse;         // use #1 ADC
     ADMUX |= (1 << REFS0);    // use AVcc as the reference
-    /* ADMUX &= ~(1 << ADLAR);   // clear for 10 bit resolution */
     ADMUX |= (1 << ADLAR);    // Right adjust for 8 bit resolution
 
     ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);    // 128 prescale for 8Mhz
@@ -26,8 +28,6 @@ uint8_t ADCsingleREAD(uint8_t adctouse)
 
     while(ADCSRA & (1 << ADSC));      // Thanks T, this line waits for the ADC to finish
 
-    /* ADCval = ADCL; */
-    /* ADCval = (ADCH << 8) + ADCval;    // ADCH is read so ADC can be updated again */
     ADCval = ADCH;
 
     return ADCval;
@@ -63,12 +63,14 @@ void displaychar(const uint8_t c)
     }
 }
 
-void spray_if(bool cond)
+void start_spraying(void)
 {
-    if (cond)
-        PORTD = 1 << 4;
-    else
-        PORTD = 0;
+    PORTD = 1 << 4;
+}
+
+void stop_spraying(void)
+{
+    PORTD = 0;
 }
 
 void attention(void)
@@ -84,8 +86,9 @@ void attention(void)
 
 int main(void)
 {
-    uint8_t iters;
+    uint8_t iters, strikes = 0;
     float astar = 0, astar_prev = 0;
+    bool currently_spraying = false;
 
     DDRD = 1 << 4;              /* make PD4 an output */
 
@@ -114,11 +117,22 @@ int main(void)
          */
 
         /* http://electronics.stackexchange.com/a/30384/35725 */
-        astar = astar_prev + ((adcval - astar_prev)  * 0.015);
+        astar = astar_prev + ((adcval - astar_prev)  * 0.0005);
         astar_prev = astar;
 
-        if (iters == 255)
-            spray_if((uint8_t) astar > 28);
+        if (iters == 255) {
+            if (astar > 28) {
+                if (strikes++ > LAZY_SPIDER_FACTOR &&
+                    currently_spraying == false) {
+                    start_spraying();
+                    currently_spraying = true;
+                }
+            } else {
+                stop_spraying();
+                currently_spraying = false;
+                strikes = 0;
+            }
+        }
     }
 
     return 0;   /* never reached */
