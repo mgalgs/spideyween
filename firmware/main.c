@@ -7,16 +7,17 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdint.h>
+#include <stdbool.h>
 
-#if 0
 /* https://sites.google.com/site/qeewiki/books/avr-guide/analog-input */
-int ADCsingleREAD(uint8_t adctouse)
+uint8_t ADCsingleREAD(uint8_t adctouse)
 {
     int ADCval;
 
     ADMUX = adctouse;         // use #1 ADC
     ADMUX |= (1 << REFS0);    // use AVcc as the reference
-    ADMUX &= ~(1 << ADLAR);   // clear for 10 bit resolution
+    /* ADMUX &= ~(1 << ADLAR);   // clear for 10 bit resolution */
+    ADMUX |= (1 << ADLAR);    // Right adjust for 8 bit resolution
 
     ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);    // 128 prescale for 8Mhz
     ADCSRA |= (1 << ADEN);    // Enable the ADC
@@ -25,21 +26,21 @@ int ADCsingleREAD(uint8_t adctouse)
 
     while(ADCSRA & (1 << ADSC));      // Thanks T, this line waits for the ADC to finish
 
-    ADCval = ADCL;
-    ADCval = (ADCH << 8) + ADCval;    // ADCH is read so ADC can be updated again
+    /* ADCval = ADCL; */
+    /* ADCval = (ADCH << 8) + ADCval;    // ADCH is read so ADC can be updated again */
+    ADCval = ADCH;
 
     return ADCval;
 }
-#endif
 
-void sitfor(char sitfor)
+void sitfor(uint8_t sitfor)
 {
-    char i;
+    uint8_t i;
     for (i = 0; i < sitfor; ++i)
         _delay_ms(16);
 }
 
-void displaybit(char bit)
+void displaybit(uint8_t bit)
 {
     PORTD = 1 << 4;
     if (bit)
@@ -53,25 +54,71 @@ void displaybit(char bit)
         sitfor(20);
 }
 
-void displaychar(const char c)
+void displaychar(const uint8_t c)
 {
-    char i;
+    uint8_t i;
     for (i = 0; i < 8; ++i) {
         displaybit((c >> i) & 1);
         sitfor(20);
     }
 }
 
+void spray_if(bool cond)
+{
+    if (cond)
+        PORTD = 1 << 4;
+    else
+        PORTD = 0;
+}
+
+void attention(void)
+{
+    uint8_t i;
+    for (i = 0; i < 10; ++i) {
+        PORTD = 1 << 4;
+        sitfor(1);
+        PORTD = 0;
+        sitfor(1);
+    }
+}
+
 int main(void)
 {
+    uint8_t iters;
+    float astar = 0, astar_prev = 0;
+
     DDRD = 1 << 4;              /* make PD4 an output */
 
-    for(;;) {
-        char i;
-        for (i = 0; i < 10; ++i) {
-            displaychar(i);
-            sitfor(50);
-        }
+    attention();
+
+    for(iters = 0; ; ++iters) {
+        uint8_t adcval;
+
+        adcval = ADCsingleREAD(0);
+        /* displaychar(adcval); */
+        /* sitfor(50); */
+
+        /*
+         * adcval interpretation
+         * =====================
+         *
+         * Some collected data:
+         *
+         *   10-15: infinity
+         *   28-30: about 3 feet
+         *
+         * For our purposes, anytime the target gets closer than about 3
+         * feet we want to spray them, so:
+         *
+         *    > 28: ATTACK!
+         */
+
+        /* http://electronics.stackexchange.com/a/30384/35725 */
+        astar = astar_prev + ((adcval - astar_prev)  * 0.015);
+        astar_prev = astar;
+
+        if (iters == 255)
+            spray_if((uint8_t) astar > 28);
     }
 
     return 0;   /* never reached */
