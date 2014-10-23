@@ -8,6 +8,7 @@
 #include <util/delay.h>
 #include <stdint.h>
 
+#if 0
 /* https://sites.google.com/site/qeewiki/books/avr-guide/analog-input */
 int ADCsingleREAD(uint8_t adctouse)
 {
@@ -29,25 +30,36 @@ int ADCsingleREAD(uint8_t adctouse)
 
     return ADCval;
 }
+#endif
+
+void sitfor(char sitfor)
+{
+    char i;
+    for (i = 0; i < sitfor; ++i)
+        _delay_ms(16);
+}
 
 void displaybit(char bit)
 {
-    char i;
     PORTD = 1 << 4;
-    for (i = 0; i < 10; ++i) {
-        if (bit)
-            _delay_ms(16);
-        else
-            _delay_ms(1);
-    }
+    if (bit)
+        sitfor(20);
+    else
+        sitfor(2);
     PORTD = 0;
+    if (bit)
+        sitfor(2);
+    else
+        sitfor(20);
 }
 
 void displaychar(const char c)
 {
     char i;
-    for (i = 0; i < 8; ++i)
+    for (i = 0; i < 8; ++i) {
         displaybit((c >> i) & 1);
+        sitfor(20);
+    }
 }
 
 int main(void)
@@ -56,10 +68,10 @@ int main(void)
 
     for(;;) {
         char i;
-        for (i = 0; i < 10; ++i)
+        for (i = 0; i < 10; ++i) {
             displaychar(i);
-        for (i = 0; i < 255; ++i)
-            _delay_ms(16);
+            sitfor(50);
+        }
     }
 
     return 0;   /* never reached */
