@@ -47,6 +47,12 @@ static void servo_init(void)
     TCCR1A |= (1 << COM1A1) | (1 << WGM11); // non-inverting mode for OC1A
 	TCCR1B |= (1 << WGM13) | (1 << WGM12) | (1 << CS11); // Mode 14, Prescaler 8
 
+    /*
+     * 16 MHz CPU, pulse width of 20 ms, means we need a pulse every
+     * 320,000 cycles.  We can't count to 320,000 with a 16-bit register,
+     * so we prescale it by 8 (we count by 8's).  We need to count by 8's
+     * to 40,000 to get the 20 ms pulse.
+     */
 	ICR1 = 40000; // 320000 / 8 = 40000
 
 	DDRB |= (1 << PB1); // OC1A set to output
@@ -104,7 +110,7 @@ static void start_spraying(void)
 {
     currently_spraying = true;
     PORTD = 1 << 4;
-    servo_set_degrees(0);
+    servo_set_degrees(1);
 }
 
 static void stop_spraying(void)
