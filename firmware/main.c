@@ -13,7 +13,7 @@
 #define LAZY_SPIDER_FACTOR 8
 
 /* https://sites.google.com/site/qeewiki/books/avr-guide/analog-input */
-uint8_t ADCsingleREAD(uint8_t adctouse)
+static uint8_t ADCsingleREAD(uint8_t adctouse)
 {
     uint8_t ADCval;
 
@@ -33,14 +33,14 @@ uint8_t ADCsingleREAD(uint8_t adctouse)
     return ADCval;
 }
 
-void sitfor(uint8_t sitfor)
+static void sitfor(uint8_t sitfor)
 {
     uint8_t i;
     for (i = 0; i < sitfor; ++i)
         _delay_ms(16);
 }
 
-void displaybit(uint8_t bit)
+static void displaybit(uint8_t bit)
 {
     PORTD = 1 << 4;
     if (bit)
@@ -54,7 +54,7 @@ void displaybit(uint8_t bit)
         sitfor(20);
 }
 
-void displaychar(const uint8_t c)
+static void displaychar(const uint8_t c)
 {
     uint8_t i;
     for (i = 0; i < 8; ++i) {
@@ -63,17 +63,17 @@ void displaychar(const uint8_t c)
     }
 }
 
-void start_spraying(void)
+static void start_spraying(void)
 {
     PORTD = 1 << 4;
 }
 
-void stop_spraying(void)
+static void stop_spraying(void)
 {
     PORTD = 0;
 }
 
-void attention(void)
+static void attention(void)
 {
     uint8_t i;
     for (i = 0; i < 10; ++i) {
@@ -98,8 +98,7 @@ int main(void)
         uint8_t adcval;
 
         adcval = ADCsingleREAD(0);
-        /* displaychar(adcval); */
-        /* sitfor(50); */
+        (void)displaychar;
 
         /*
          * adcval interpretation
