@@ -33,6 +33,11 @@ static uint8_t ADCsingleREAD(uint8_t adctouse)
     return ADCval;
 }
 
+static void led_init(void)
+{
+    DDRD = 1 << 4;              /* make PD4 an output */
+}
+
 /*
  * http://www.electroons.com/electroons/servo_control.html
  * http://eliaselectronics.com/atmega-servo-tutorial/
@@ -106,7 +111,7 @@ static void stop_spraying(void)
 {
     currently_spraying = false;
     PORTD = 0;
-    servo_set_degrees(90);
+    servo_set_degrees(180);
 }
 
 static void attention(void)
@@ -125,10 +130,11 @@ int main(void)
     uint8_t iters, strikes = 0;
     float astar = 0, astar_prev = 0;
 
-    DDRD = 1 << 4;              /* make PD4 an output */
+    led_init();
     servo_init();
-    stop_spraying();
+    /* (void)servo_init; */
     attention();
+    stop_spraying();
 
     for(iters = 0; ; ++iters) {
         uint8_t adcval;
